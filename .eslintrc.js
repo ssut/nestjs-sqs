@@ -18,6 +18,7 @@ module.exports = {
   },
   rules: {
     '@typescript-eslint/explicit-member-accessibility': 1,
+    '@typescript-eslint/explicit-module-boundary-types': 0,
     '@typescript-eslint/interface-name-prefix': 'off',
     '@typescript-eslint/explicit-function-return-type': 'off',
     '@typescript-eslint/no-explicit-any': 'off',
