@@ -18,6 +18,8 @@ $ npm i --save @ssut/nestjs-sqs
 
 ## Quick Start
 
+### Register module
+
 Just register this module:
 
 ```ts
@@ -63,6 +65,45 @@ SqsModule.registerAsync({
   imports: [ConfigModule],
   useExisting: ConfigService,
 });
+```
+
+### Decorate methods
+
+You need to decorate methods in your NestJS providers in order to have them be automatically attached as event handlers for incoming SQS messages:
+
+```ts
+@Injectable()
+export class AppMessageHandler {
+  @SqsMessageHandler(/** name: */ 'queueName', /** batch: */ false)
+  public async handleMessage(message: AWS.SQS.Message) {
+  }
+  
+  @SqsConsumerEventHandler(/** name: */ 'queueName', /** eventName: */ 'processing_error')
+  public onProcessingError(error: Error, message: AWS.SQS.Message) {
+    // report errors here
+  }
+}
+```
+
+### Produce messages
+
+```ts
+export class AppService {
+  public constructor(
+    private readonly sqsService: SqsService,
+  ) { }
+  
+  public async dispatchSomething() {
+    await this.sqsService.send(/** name: */ 'queueName', {
+      id: 'id',
+      body: { ... },
+      groupId: 'groupId',
+      deduplicationId: 'deduplicationId',
+      messageAttributes: { ... },
+      delaySeconds: 0,
+    });
+  }
+}
 ```
 
 ### Configuration
