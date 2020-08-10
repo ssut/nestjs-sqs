@@ -1,0 +1,15 @@
+.github/
+.idea/
+coverage/
+e2e/
+lib/
+node_modules/
+tsconfig.json
+tsconfig.eslint.json
+.prettierignore
+.prettierrc
+.eslintignore
+.eslintrc.js
+jest-e2e.config.js
+jest.config.js
+.editorconfig
