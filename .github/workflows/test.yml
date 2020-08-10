@@ -1,0 +1,32 @@
+name: Test
+
+on: push
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [10.x, 12.x]
+    services:
+      elasticmq:
+        image: s12v/elasticmq
+        options: -p 9324:9324 -v /tmp/elasticmq:/etc/elasticmq --name elasticmq
+    steps:
+      - uses: actions/checkout@v2
+        name: Checkout code
+      - run: sudo cp ${{ github.workspace }}/.github/build/elasticmq.conf /tmp/elasticmq
+      - name: Restart elasticmq
+        uses: docker://docker
+        with:
+          args: docker restart elasticmq
+      - uses: actions/setup-node@v1
+        name: Use Node.js ${{ matrix.node-version }}
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: npm install
+        run: npm ci
+      - name: npm test
+        env:
+          SQS_ENDPOINT: http://localhost:9324
+        run: npm run test:e2e
