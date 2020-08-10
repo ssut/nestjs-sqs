@@ -1,6 +1,6 @@
-import { Module, Global, DynamicModule, Provider, Type } from '@nestjs/common';
+import { DynamicModule, Global, Module, Provider, Type } from '@nestjs/common';
 import { SqsService } from './sqs.service';
-import { SqsConsumerOptions, SqsModuleAsyncOptions, SqsModuleOptionsFactory, SqsOptions } from './sqs.types';
+import { SqsModuleAsyncOptions, SqsModuleOptionsFactory, SqsOptions } from './sqs.types';
 import { SQS_OPTIONS } from './sqs.constants';
 import { DiscoveryModule, DiscoveryService } from '@nestjs-plus/discovery';
 
@@ -49,7 +49,7 @@ export class SqsModule {
     return {
       global: true,
       module: SqsModule,
-      imports: [DiscoveryModule, ...options.imports],
+      imports: [DiscoveryModule, ...(options.imports ?? [])],
       providers: [
         ...asyncProviders,
         sqsProvider,
