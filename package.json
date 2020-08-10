@@ -1,6 +1,6 @@
 {
   "name": "@ssut/nestjs-sqs",
-  "version": "1.0.0",
+  "version": "1.0.0-rc1",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,13 +10,16 @@
     "format": "npx prettier --write **/*.{ts,json}",
     "lint": "npx eslint \"lib/**/*.ts\" --fix"
   },
+  "bugs": {
+    "url": "https://github.com/ssut/nestjs-sqs/issues"
+  },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ssut/nestjs-sqs-consumer.git"
+    "url": "git+https://github.com/ssut/nestjs-sqs.git"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Suhun Han <ssut@ssut.me>",
+  "license": "MIT",
   "dependencies": {
     "sqs-consumer": "^5.4.0",
     "sqs-producer": "^2.0.2",
