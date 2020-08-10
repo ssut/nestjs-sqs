@@ -37,6 +37,41 @@ const TestQueues: { [key in TestQueue]: SqsConsumerOptions | SqsProducerOptions 
 describe('SqsModule', () => {
   let module: TestingModule;
 
+  describe.skip('register', () => {
+  });
+
+  describe('registerAsync', () => {
+    let module: TestingModule;
+
+    afterAll(async () => {
+      await module?.close();
+    });
+
+    it('should register module async', async () => {
+      module = await Test.createTestingModule({
+        imports: [
+          SqsModule.registerAsync({
+            useFactory: async () => {
+              return {
+                consumers: [
+                  TestQueues[TestQueue.Test],
+                ],
+                producers: [
+                  TestQueues[TestQueue.Test],
+                ],
+              };
+            },
+          }),
+        ],
+      }).compile();
+
+      const sqsService = module.get(SqsService);
+      expect(sqsService).toBeTruthy();
+      expect(sqsService.options.consumers).toHaveLength(1);
+      expect(sqsService.options.producers).toHaveLength(1);
+    });
+  });
+
   describe('full flow', () => {
     const fakeProcessor = jest.fn();
     const fakeDLQProcessor = jest.fn();
