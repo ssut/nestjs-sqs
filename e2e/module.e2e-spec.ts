@@ -175,18 +175,11 @@ describe('SqsModule', () => {
       });
     });
 
-    it('should call message handler multiple times when multiple messages have come', async (done) => {
-      let called = 0;
+    it('should call message handler multiple times when multiple messages have come', async () => {
+      jest.setTimeout(5000);
 
       const sqsService = module.get(SqsService);
       const groupId = String(Math.floor(Math.random() * 1000000));
-      fakeProcessor.mockImplementation((message) => {
-        expect(message).toBeTruthy();
-
-        if (++called === 3) {
-          done();
-        }
-      });
 
       for (let i = 0; i < 3; i++) {
         const id = `${groupId}_${i}`;
@@ -198,6 +191,14 @@ describe('SqsModule', () => {
           deduplicationId: id,
         });
       }
+
+      await waitForExpect(() => {
+        expect(fakeProcessor.mock.calls).toHaveLength(3);
+        for (const call of fakeProcessor.mock.calls) {
+          expect(call).toHaveLength(1);
+          expect(call[0]).toBeTruthy();
+        }
+      }, 5000, 100);
     });
 
     it('should call the registered error handler when an error occurs', async (done) => {
