@@ -112,7 +112,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
     return this.producers.get(name).queueSize();
   }
 
-  public send(name: QueueName, payload: Message | Message[]) {
+  public send<T = any>(name: QueueName, payload: Message<T> | Message<T>[]) {
     if (!this.producers.has(name)) {
       throw new Error(`Producer does not exist: ${name}`);
     }
@@ -121,7 +121,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
     const messages = originalMessages.map((message) => {
       let body = message.body;
       if (typeof body !== 'string') {
-        body = JSON.stringify(body);
+        body = JSON.stringify(body) as any;
       }
 
       return {

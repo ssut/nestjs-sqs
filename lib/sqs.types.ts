@@ -32,9 +32,9 @@ export interface SqsModuleAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
   inject?: any[];
 }
 
-export interface Message {
+export interface Message<T = any> {
   id: string;
-  body: any;
+  body: T;
   groupId?: string;
   deduplicationId?: string;
   delaySeconds?: number;
