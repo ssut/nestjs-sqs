@@ -17,11 +17,15 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
   public constructor(
     @Inject(SQS_OPTIONS) public readonly options: SqsOptions,
     private readonly discover: DiscoveryService,
-  ) { }
+  ) {}
 
   public async onModuleInit(): Promise<void> {
-    const messageHandlers = await this.discover.providerMethodsWithMetaAtKey<SqsMessageHandlerMeta>(SQS_CONSUMER_METHOD);
-    const eventHandlers = await this.discover.providerMethodsWithMetaAtKey<SqsConsumerEventHandlerMeta>(SQS_CONSUMER_EVENT_HANDLER);
+    const messageHandlers = await this.discover.providerMethodsWithMetaAtKey<SqsMessageHandlerMeta>(
+      SQS_CONSUMER_METHOD,
+    );
+    const eventHandlers = await this.discover.providerMethodsWithMetaAtKey<SqsConsumerEventHandlerMeta>(
+      SQS_CONSUMER_EVENT_HANDLER,
+    );
 
     this.options.consumers?.forEach((options) => {
       const { name, ...consumerOptions } = options;
@@ -37,16 +41,21 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
       const isBatchHandler = metadata.meta.batch === true;
       const consumer = Consumer.create({
         ...consumerOptions,
-        ...(
-          isBatchHandler
-          ? { handleMessageBatch: (...args: any[]) => metadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance) }
-          : { handleMessage: metadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance) }
-        ),
+        ...(isBatchHandler
+          ? {
+              handleMessageBatch: metadata.discoveredMethod.handler.bind(
+                metadata.discoveredMethod.parentClass.instance,
+              ),
+            }
+          : { handleMessage: metadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance) }),
       });
 
       const eventMetadata = eventHandlers.find(({ meta }) => meta.name === name);
       if (eventMetadata) {
-        consumer.addListener(eventMetadata.meta.eventName, eventMetadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance));
+        consumer.addListener(
+          eventMetadata.meta.eventName,
+          eventMetadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance),
+        );
       }
       this.consumers.set(name, consumer);
     });
@@ -77,7 +86,10 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
       throw new Error(`Consumer/Producer does not exist: ${name}`);
     }
 
-    const { sqs, queueUrl } = (this.consumers.get(name) ?? this.producers.get(name)) as { sqs: AWS.SQS, queueUrl: string };
+    const { sqs, queueUrl } = (this.consumers.get(name) ?? this.producers.get(name)) as {
+      sqs: AWS.SQS;
+      queueUrl: string;
+    };
     if (!sqs) {
       throw new Error('SQS instance does not exist');
     }
@@ -90,17 +102,21 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
 
   public async purgeQueue(name: QueueName) {
     const { sqs, queueUrl } = this.getQueueInfo(name);
-    return sqs.purgeQueue({
-      QueueUrl: queueUrl,
-    }).promise();
+    return sqs
+      .purgeQueue({
+        QueueUrl: queueUrl,
+      })
+      .promise();
   }
 
   public async getQueueAttributes(name: QueueName) {
     const { sqs, queueUrl } = this.getQueueInfo(name);
-    const response = await sqs.getQueueAttributes({
-      QueueUrl: queueUrl,
-      AttributeNames: ['All'],
-    }).promise();
+    const response = await sqs
+      .getQueueAttributes({
+        QueueUrl: queueUrl,
+        AttributeNames: ['All'],
+      })
+      .promise();
     return response.Attributes as { [key in QueueAttributeName]: string };
   }
 
