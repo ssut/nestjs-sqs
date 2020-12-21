@@ -50,12 +50,14 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
           : { handleMessage: metadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance) }),
       });
 
-      const eventMetadata = eventHandlers.find(({ meta }) => meta.name === name);
-      if (eventMetadata) {
-        consumer.addListener(
-          eventMetadata.meta.eventName,
-          eventMetadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance),
-        );
+      const eventsMetadata = eventHandlers.filter(({ meta }) => meta.name === name);
+      for (const eventMetadata of eventsMetadata) {
+        if (eventMetadata) {
+          consumer.addListener(
+            eventMetadata.meta.eventName,
+            eventMetadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance),
+          );
+        }
       }
       this.consumers.set(name, consumer);
     });
