@@ -224,12 +224,12 @@ describe('SqsModule', () => {
       });
     });
 
-    // it('should consume a dead letter from DLQ', async () => {
-    //   jest.setTimeout(10000);
+    it('should consume a dead letter from DLQ', async () => {
+      jest.setTimeout(10000);
 
-    //   await waitForExpect(() => {
-    //     expect(fakeDLQProcessor.mock.calls.length).toBe(1);
-    //   }, 9900, 500);
-    // });
+      await waitForExpect(() => {
+        expect(fakeDLQProcessor.mock.calls.length).toBe(1);
+      }, 9900, 500);
+    });
   });
 });
