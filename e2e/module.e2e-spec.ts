@@ -24,12 +24,12 @@ const sqs = new AWS.SQS({
 const TestQueues: { [key in TestQueue]: SqsConsumerOptions | SqsProducerOptions } = {
   [TestQueue.Test]: {
     name: TestQueue.Test,
-    queueUrl: `${SQS_ENDPOINT}/queue/test`,
+    queueUrl: `${SQS_ENDPOINT}/queue/test.fifo`,
     sqs,
   },
   [TestQueue.DLQ]: {
     name: TestQueue.DLQ,
-    queueUrl: `${SQS_ENDPOINT}/queue/test-dead`,
+    queueUrl: `${SQS_ENDPOINT}/queue/test-dead.fifo`,
     sqs,
   },
 };
