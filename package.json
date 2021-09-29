@@ -21,10 +21,10 @@
   "author": "Suhun Han <ssut@ssut.me>",
   "license": "MIT",
   "dependencies": {
-    "sqs-consumer": "^5.6.0",
-    "sqs-producer": "^2.1.0",
+    "@nestjs-plus/discovery": "^2.0.2",
     "aws-sdk": "^2.985.0",
-    "@nestjs-plus/discovery": "^2.0.2"
+    "sqs-consumer": "^5.6.0",
+    "sqs-producer": "^2.1.0"
   },
   "devDependencies": {
     "@nestjs/common": "^8.0.6",
