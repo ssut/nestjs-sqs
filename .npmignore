@@ -1,5 +1,6 @@
 .github/
 .idea/
+.vscode/
 coverage/
 e2e/
 lib/
