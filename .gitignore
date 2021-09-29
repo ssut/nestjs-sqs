@@ -74,3 +74,5 @@ Temporary Items
 
 dist/
 node_modules/
+
+*.tgz
