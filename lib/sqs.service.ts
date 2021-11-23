@@ -1,11 +1,10 @@
 import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { Consumer } from 'sqs-consumer';
-import { Producer } from 'sqs-producer';
 import { Message, QueueName, SqsConsumerEventHandlerMeta, SqsMessageHandlerMeta, SqsOptions } from './sqs.types';
 import { DiscoveryService } from '@nestjs-plus/discovery';
 import { SQS_CONSUMER_EVENT_HANDLER, SQS_CONSUMER_METHOD, SQS_OPTIONS } from './sqs.constants';
-import * as AWS from 'aws-sdk';
-import type { QueueAttributeName } from 'aws-sdk/clients/sqs';
+import { Consumer } from './sqs-consumer';
+import { Producer } from './sqs-producer';
+import { GetQueueAttributesCommand, PurgeQueueCommand, QueueAttributeName, SQSClient } from '@aws-sdk/client-sqs';
 
 @Injectable()
 export class SqsService implements OnModuleInit, OnModuleDestroy {
@@ -91,7 +90,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
     }
 
     const { sqs, queueUrl } = (this.consumers.get(name) ?? this.producers.get(name)) as {
-      sqs: AWS.SQS;
+      sqs: SQSClient;
       queueUrl: string;
     };
     if (!sqs) {
@@ -106,21 +105,15 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
 
   public async purgeQueue(name: QueueName) {
     const { sqs, queueUrl } = this.getQueueInfo(name);
-    return sqs
-      .purgeQueue({
-        QueueUrl: queueUrl,
-      })
-      .promise();
+    return sqs.send(new PurgeQueueCommand({ QueueUrl: queueUrl }));
   }
 
   public async getQueueAttributes(name: QueueName) {
     const { sqs, queueUrl } = this.getQueueInfo(name);
-    const response = await sqs
-      .getQueueAttributes({
-        QueueUrl: queueUrl,
-        AttributeNames: ['All'],
-      })
-      .promise();
+    const response = await sqs.send(new GetQueueAttributesCommand({ 
+      QueueUrl: queueUrl, 
+      AttributeNames: ['All'] 
+    }));
     return response.Attributes as { [key in QueueAttributeName]: string };
   }
 
