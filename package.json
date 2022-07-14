@@ -4,6 +4,9 @@
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "scripts": {
     "test:e2e": "npx jest --config=jest-e2e.config.js --detectOpenHandles --runInBand --forceExit",
     "build": "npx rimraf -rf dist && tsc -p tsconfig.json",
