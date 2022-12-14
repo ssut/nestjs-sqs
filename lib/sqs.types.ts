@@ -1,7 +1,7 @@
 import type { ConsumerOptions } from 'sqs-consumer';
 import type { Producer } from 'sqs-producer';
 import type { SQS } from 'aws-sdk';
-import type { ModuleMetadata, Type } from '@nestjs/common';
+import type { LoggerService, ModuleMetadata, Type } from '@nestjs/common';
 
 export type ProducerOptions = Parameters<typeof Producer.create>[0];
 export type QueueName = string;
@@ -17,7 +17,8 @@ export type SqsProducerOptions = ProducerOptions & {
 export interface SqsOptions {
   consumers?: SqsConsumerOptions[];
   producers?: SqsProducerOptions[];
-};
+  logger?: LoggerService;
+}
 
 export interface SqsModuleOptionsFactory {
   createOptions(): Promise<SqsOptions> | SqsOptions;
