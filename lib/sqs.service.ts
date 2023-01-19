@@ -17,7 +17,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
   public constructor(
     @Inject(SQS_OPTIONS) public readonly options: SqsOptions,
     private readonly discover: DiscoveryService,
-  ) {}
+  ) { }
 
   public async onModuleInit(): Promise<void> {
     this.logger = this.options.logger ?? new Logger('SqsService', { timestamp: false });
@@ -31,37 +31,43 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
 
     this.options.consumers?.forEach((options) => {
       const { name, ...consumerOptions } = options;
-      if (this.consumers.has(name)) {
-        throw new Error(`Consumer already exists: ${name}`);
-      }
 
-      const metadata = messageHandlers.find(({ meta }) => meta.name === name);
-      if (!metadata) {
-        this.logger.warn(`No metadata found for: ${name}`);
-      }
+      consumerOptions.instances = consumerOptions.instances ?? 1;
 
-      const isBatchHandler = metadata.meta.batch === true;
-      const consumer = Consumer.create({
-        ...consumerOptions,
-        ...(isBatchHandler
-          ? {
+      for (let i = 0; i < consumerOptions.instances; i++) {
+        const consumerName = `${name}_${i}`;
+        if (this.consumers.has(consumerName)) {
+          throw new Error(`Consumer already exists: ${consumerName}`);
+        }
+
+        const metadata = messageHandlers.find(({ meta }) => meta.name === name);
+        if (!metadata) {
+          this.logger.warn(`No metadata found for: ${consumerName}`);
+        }
+
+        const isBatchHandler = metadata.meta.batch === true;
+        const consumer = Consumer.create({
+          ...consumerOptions,
+          ...(isBatchHandler
+            ? {
               handleMessageBatch: metadata.discoveredMethod.handler.bind(
                 metadata.discoveredMethod.parentClass.instance,
               ),
             }
-          : { handleMessage: metadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance) }),
-      });
+            : { handleMessage: metadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance) }),
+        });
 
-      const eventsMetadata = eventHandlers.filter(({ meta }) => meta.name === name);
-      for (const eventMetadata of eventsMetadata) {
-        if (eventMetadata) {
-          consumer.addListener(
-            eventMetadata.meta.eventName,
-            eventMetadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance),
-          );
+        const eventsMetadata = eventHandlers.filter(({ meta }) => meta.name === name);
+        for (const eventMetadata of eventsMetadata) {
+          if (eventMetadata) {
+            consumer.addListener(
+              eventMetadata.meta.eventName,
+              eventMetadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance),
+            );
+          }
         }
+        this.consumers.set(consumerName, consumer);
       }
-      this.consumers.set(name, consumer);
     });
 
     this.options.producers?.forEach((options) => {
@@ -86,11 +92,11 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
   }
 
   private getQueueInfo(name: QueueName) {
-    if (!this.consumers.has(name) && !this.producers.has(name)) {
+    if (!this.consumers.has(`${name}_0`) && !this.producers.has(`${name}_0`)) {
       throw new Error(`Consumer/Producer does not exist: ${name}`);
     }
 
-    const { sqs, queueUrl } = (this.consumers.get(name) ?? this.producers.get(name)) as {
+    const { sqs, queueUrl } = (this.consumers.get(`${name}_0`) ?? this.producers.get(`${name}_0`)) as {
       sqs: AWS.SQS;
       queueUrl: string;
     };
@@ -125,15 +131,15 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
   }
 
   public getProducerQueueSize(name: QueueName) {
-    if (!this.producers.has(name)) {
+    if (!this.producers.has(`${name}_0`)) {
       throw new Error(`Producer does not exist: ${name}`);
     }
 
-    return this.producers.get(name).queueSize();
+    return this.producers.get(`${name}_0`).queueSize();
   }
 
   public send<T = any>(name: QueueName, payload: Message<T> | Message<T>[]) {
-    if (!this.producers.has(name)) {
+    if (!this.producers.has(`${name}_0`)) {
       throw new Error(`Producer does not exist: ${name}`);
     }
 
@@ -150,7 +156,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
       };
     });
 
-    const producer = this.producers.get(name);
+    const producer = this.producers.get(`${name}_0`);
     return producer.send(messages as any[]);
   }
 }
