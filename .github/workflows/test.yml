@@ -19,6 +19,8 @@ jobs:
         uses: docker://docker
         with:
           args: docker restart elasticmq
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
       - uses: actions/setup-node@v3
         name: Use Node.js ${{ matrix.node-version }}
         with:
