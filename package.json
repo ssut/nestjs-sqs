@@ -1,17 +1,17 @@
 {
   "name": "@ssut/nestjs-sqs",
-  "version": "1.3.0",
+  "version": "2.0.0",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   },
   "scripts": {
-    "test:e2e": "npx jest --config=jest-e2e.config.js --detectOpenHandles --runInBand --forceExit",
-    "build": "npx rimraf -rf dist && tsc -p tsconfig.json",
-    "format": "npx prettier --write **/*.{ts,json}",
-    "lint": "npx eslint \"lib/**/*.ts\" --fix"
+    "test:e2e": "jest --config=jest-e2e.config.js --detectOpenHandles --runInBand --forceExit",
+    "build": "rimraf -rf dist && tsc -p tsconfig.json",
+    "format": "prettier --write **/*.{ts,json}",
+    "lint": "eslint \"lib/**/*.ts\" --fix"
   },
   "bugs": {
     "url": "https://github.com/ssut/nestjs-sqs/issues"
@@ -25,34 +25,33 @@
   "license": "MIT",
   "dependencies": {
     "@nestjs-plus/discovery": "^2.0.2",
-    "sqs-consumer": "^5.7.0",
-    "sqs-producer": "^2.1.0"
+    "sqs-consumer": "^7.0.3",
+    "sqs-producer": "^3.1.1"
   },
   "devDependencies": {
-    "@nestjs/common": "^9.0.3",
-    "@nestjs/core": "^9.0.3",
-    "@nestjs/testing": "^9.0.3",
-    "@types/jest": "^27.0.1",
-    "@typescript-eslint/eslint-plugin": "^3.8.0",
-    "@typescript-eslint/parser": "^3.8.0",
-    "aws-sdk": "^2.1174.0",
-    "eslint": "^7.6.0",
-    "eslint-config-prettier": "^6.11.0",
-    "eslint-plugin-import": "^2.22.0",
-    "jest": "^27.1.1",
-    "prettier": "^2.0.5",
+    "@nestjs/common": "^9.4.0",
+    "@nestjs/core": "^9.4.0",
+    "@nestjs/testing": "^9.4.0",
+    "@types/jest": "^27.5.2",
+    "@typescript-eslint/eslint-plugin": "^3.10.1",
+    "@typescript-eslint/parser": "^3.10.1",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^6.15.0",
+    "eslint-plugin-import": "^2.27.5",
+    "jest": "^27.5.1",
+    "prettier": "^2.8.8",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
-    "rxjs": "^7.1.0",
-    "ts-jest": "^27.0.5",
-    "ts-node": "^10.2.1",
-    "tsconfig-paths": "^3.9.0",
-    "typescript": "^4.4.2",
+    "rxjs": "^7.8.1",
+    "ts-jest": "^27.1.5",
+    "ts-node": "^10.9.1",
+    "tsconfig-paths": "^3.14.2",
+    "typescript": "^4.9.5",
     "wait-for-expect": "^3.0.2"
   },
   "peerDependencies": {
+    "@aws-sdk/client-sqs": "^3.321.1",
     "@nestjs/common": "^6.10.11 || ^7.0.0 || ^8.0.0 || ^9.0.0",
-    "@nestjs/core": "^6.10.11 || ^7.0.0 || ^8.0.0 || ^9.0.0",
-    "aws-sdk": "^2"
+    "@nestjs/core": "^6.10.11 || ^7.0.0 || ^8.0.0 || ^9.0.0"
   }
 }

@@ -44,7 +44,7 @@ SqsModule.registerAsync({
   useFactory: () => {
     return {
       consumers: [],
-      producers: [],         
+      producers: [],
     };
   },
 });
@@ -72,14 +72,15 @@ SqsModule.registerAsync({
 You need to decorate methods in your NestJS providers in order to have them be automatically attached as event handlers for incoming SQS messages:
 
 ```ts
+import { Message } from '@aws-sdk/client-sqs';
+
 @Injectable()
 export class AppMessageHandler {
   @SqsMessageHandler(/** name: */ 'queueName', /** batch: */ false)
-  public async handleMessage(message: AWS.SQS.Message) {
-  }
-  
+  public async handleMessage(message: Message) {}
+
   @SqsConsumerEventHandler(/** name: */ 'queueName', /** eventName: */ 'processing_error')
-  public onProcessingError(error: Error, message: AWS.SQS.Message) {
+  public onProcessingError(error: Error, message: Message) {
     // report errors here
   }
 }
@@ -92,7 +93,7 @@ export class AppService {
   public constructor(
     private readonly sqsService: SqsService,
   ) { }
-  
+
   public async dispatchSomething() {
     await this.sqsService.send(/** name: */ 'queueName', {
       id: 'id',
@@ -108,7 +109,7 @@ export class AppService {
 
 ### Configuration
 
-See [here](https://github.com/ssut/nestjs-sqs/blob/master/lib/sqs.types.ts), and note that we have same configuration as [bbc/sqs-consumer's](https://github.com/bbc/sqs-producer). 
+See [here](https://github.com/ssut/nestjs-sqs/blob/master/lib/sqs.types.ts), and note that we have same configuration as [bbc/sqs-consumer's](https://github.com/bbc/sqs-producer).
 In most time you just need to specify both `name` and `queueUrl` at the minimum requirements.
 
 ## License
