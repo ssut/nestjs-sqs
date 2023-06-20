@@ -2,7 +2,7 @@ import { DynamicModule, Global, Module, Provider, Type } from '@nestjs/common';
 import { SqsService } from './sqs.service';
 import { SqsModuleAsyncOptions, SqsModuleOptionsFactory, SqsOptions } from './sqs.types';
 import { SQS_OPTIONS } from './sqs.constants';
-import { DiscoveryModule, DiscoveryService } from '@nestjs-plus/discovery';
+import { DiscoveryModule, DiscoveryService } from '@golevelup/nestjs-discovery';
 
 @Global()
 @Module({
