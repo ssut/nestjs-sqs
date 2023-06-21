@@ -109,7 +109,7 @@ export class AppService {
 
 ### Configuration
 
-See [here](https://github.com/ssut/nestjs-sqs/blob/master/lib/sqs.types.ts), and note that we have same configuration as [bbc/sqs-consumer's](https://github.com/bbc/sqs-producer).
+See [here](https://github.com/ssut/nestjs-sqs/blob/master/lib/sqs.types.ts), and note that we have same configuration as [bbc/sqs-consumer's](https://github.com/bbc/sqs-consumer).
 In most time you just need to specify both `name` and `queueUrl` at the minimum requirements.
 
 ## License
