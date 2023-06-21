@@ -24,7 +24,7 @@
   "author": "Suhun Han <ssut@ssut.me>",
   "license": "MIT",
   "dependencies": {
-    "@nestjs-plus/discovery": "^2.0.2",
+    "@golevelup/nestjs-discovery": "^3.0.0",
     "sqs-consumer": "^7.0.3",
     "sqs-producer": "^3.1.1"
   },
