@@ -37,6 +37,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
       const metadata = messageHandlers.find(({ meta }) => meta.name === name);
       if (!metadata) {
         this.logger.warn(`No metadata found for: ${name}`);
+        return;
       }
 
       const isBatchHandler = metadata.meta.batch === true;
