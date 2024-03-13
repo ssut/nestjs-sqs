@@ -1,4 +1,4 @@
-import type { ConsumerOptions } from 'sqs-consumer';
+import type { ConsumerOptions, StopOptions } from 'sqs-consumer';
 import type { Producer } from 'sqs-producer';
 import type { LoggerService, ModuleMetadata, Type } from '@nestjs/common';
 import type { MessageAttributeValue } from '@aws-sdk/client-sqs';
@@ -18,6 +18,7 @@ export interface SqsOptions {
   consumers?: SqsConsumerOptions[];
   producers?: SqsProducerOptions[];
   logger?: LoggerService;
+  globalStopOptions?: StopOptions;
 }
 
 export interface SqsModuleOptionsFactory {

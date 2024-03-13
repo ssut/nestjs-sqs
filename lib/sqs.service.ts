@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, LoggerService, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { Consumer } from 'sqs-consumer';
+import { Consumer, StopOptions } from 'sqs-consumer';
 import { Producer } from 'sqs-producer';
 import { SQSClient, GetQueueAttributesCommand, PurgeQueueCommand, QueueAttributeName } from '@aws-sdk/client-sqs';
 import { Message, QueueName, SqsConsumerEventHandlerMeta, SqsMessageHandlerMeta, SqsOptions } from './sqs.types';
@@ -12,6 +12,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
   public readonly producers = new Map<QueueName, Producer>();
 
   private logger: LoggerService;
+  private globalStopOptions: StopOptions;
 
   public constructor(
     @Inject(SQS_OPTIONS) public readonly options: SqsOptions,
@@ -20,6 +21,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
 
   public async onModuleInit(): Promise<void> {
     this.logger = this.options.logger ?? new Logger('SqsService', { timestamp: false });
+    this.globalStopOptions = this.options.globalStopOptions ?? {};
 
     const messageHandlers = await this.discover.providerMethodsWithMetaAtKey<SqsMessageHandlerMeta>(
       SQS_CONSUMER_METHOD,
@@ -81,7 +83,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
 
   public onModuleDestroy() {
     for (const consumer of this.consumers.values()) {
-      consumer.stop();
+      consumer.stop(this.globalStopOptions);
     }
   }
 
