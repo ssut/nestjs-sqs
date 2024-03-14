@@ -1,4 +1,4 @@
-import type { ConsumerOptions, StopOptions } from 'sqs-consumer';
+import type { Consumer, ConsumerOptions, StopOptions } from 'sqs-consumer';
 import type { Producer } from 'sqs-producer';
 import type { LoggerService, ModuleMetadata, Type } from '@nestjs/common';
 import type { MessageAttributeValue } from '@aws-sdk/client-sqs';
@@ -8,6 +8,12 @@ export type QueueName = string;
 
 export type SqsConsumerOptions = Omit<ConsumerOptions, 'handleMessage' | 'handleMessageBatch'> & {
   name: QueueName;
+  stopOptions?: StopOptions;
+};
+
+export type SqsConsumerMapValues = {
+  instance: Consumer;
+  stopOptions: StopOptions;
 };
 
 export type SqsProducerOptions = ProducerOptions & {
