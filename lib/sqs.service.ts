@@ -1,17 +1,25 @@
 import { Inject, Injectable, Logger, LoggerService, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { Consumer } from 'sqs-consumer';
+import { Consumer, StopOptions } from 'sqs-consumer';
 import { Producer } from 'sqs-producer';
 import { SQSClient, GetQueueAttributesCommand, PurgeQueueCommand, QueueAttributeName } from '@aws-sdk/client-sqs';
-import { Message, QueueName, SqsConsumerEventHandlerMeta, SqsMessageHandlerMeta, SqsOptions } from './sqs.types';
+import {
+  Message,
+  QueueName,
+  SqsConsumerEventHandlerMeta,
+  SqsConsumerMapValues,
+  SqsMessageHandlerMeta,
+  SqsOptions,
+} from './sqs.types';
 import { DiscoveryService } from '@golevelup/nestjs-discovery';
 import { SQS_CONSUMER_EVENT_HANDLER, SQS_CONSUMER_METHOD, SQS_OPTIONS } from './sqs.constants';
 
 @Injectable()
 export class SqsService implements OnModuleInit, OnModuleDestroy {
-  public readonly consumers = new Map<QueueName, Consumer>();
+  public readonly consumers = new Map<QueueName, SqsConsumerMapValues>();
   public readonly producers = new Map<QueueName, Producer>();
 
   private logger: LoggerService;
+  private globalStopOptions: StopOptions;
 
   public constructor(
     @Inject(SQS_OPTIONS) public readonly options: SqsOptions,
@@ -20,6 +28,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
 
   public async onModuleInit(): Promise<void> {
     this.logger = this.options.logger ?? new Logger('SqsService', { timestamp: false });
+    this.globalStopOptions = this.options.globalStopOptions ?? {};
 
     const messageHandlers = await this.discover.providerMethodsWithMetaAtKey<SqsMessageHandlerMeta>(
       SQS_CONSUMER_METHOD,
@@ -29,7 +38,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
     );
 
     this.options.consumers?.forEach((options) => {
-      const { name, ...consumerOptions } = options;
+      const { name, stopOptions, ...consumerOptions } = options;
       if (this.consumers.has(name)) {
         throw new Error(`Consumer already exists: ${name}`);
       }
@@ -61,7 +70,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
           );
         }
       }
-      this.consumers.set(name, consumer);
+      this.consumers.set(name, { instance: consumer, stopOptions: stopOptions ?? this.globalStopOptions });
     });
 
     this.options.producers?.forEach((options) => {
@@ -75,13 +84,13 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
     });
 
     for (const consumer of this.consumers.values()) {
-      consumer.start();
+      consumer.instance.start();
     }
   }
 
   public onModuleDestroy() {
     for (const consumer of this.consumers.values()) {
-      consumer.stop();
+      consumer.instance.stop(consumer.stopOptions);
     }
   }
 
