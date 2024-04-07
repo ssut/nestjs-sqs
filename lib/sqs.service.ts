@@ -99,7 +99,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
       throw new Error(`Consumer/Producer does not exist: ${name}`);
     }
 
-    const { sqs, queueUrl } = (this.consumers.get(name) ?? this.producers.get(name)) as {
+    const { sqs, queueUrl } = (this.consumers.get(name).instance ?? this.producers.get(name)) as {
       sqs: SQSClient;
       queueUrl: string;
     };
