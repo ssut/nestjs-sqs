@@ -25,7 +25,7 @@ export type GlobalOptions = {
 };
 
 export interface SqsOptions {
-  globalOptions: GlobalOptions;
+  globalOptions?: GlobalOptions;
   consumers?: SqsConsumerOptions[];
   producers?: SqsProducerOptions[];
   logger?: LoggerService;
