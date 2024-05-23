@@ -52,11 +52,11 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
         return;
       }
 
-      const shouldUseGlobalEndpoint = this.globalOptions.endpoint && !consumerOptions.sqs;
+      const shouldUseGlobalOptionsEndpoint = this.globalOptions.endpoint && !consumerOptions.sqs;
       const isBatchHandler = metadata.meta.batch === true;
       const consumer = Consumer.create({
         ...consumerOptions,
-        ...(shouldUseGlobalEndpoint && {
+        ...(shouldUseGlobalOptionsEndpoint && {
           sqs: new SQSClient({
             endpoint: this.globalOptions.endpoint,
           }),
@@ -88,10 +88,10 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
         throw new Error(`Producer already exists: ${name}`);
       }
 
-      const shouldUseGlobalEndpoint = this.globalOptions.endpoint && !producerOptions.sqs;
+      const shouldUseGlobalOptionsEndpoint = this.globalOptions.endpoint && !producerOptions.sqs;
       const producer = Producer.create({
         ...producerOptions,
-        ...(shouldUseGlobalEndpoint && {
+        ...(shouldUseGlobalOptionsEndpoint && {
           sqs: new SQSClient({
             endpoint: this.globalOptions.endpoint,
           }),
