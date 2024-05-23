@@ -3,6 +3,7 @@ import { Consumer, StopOptions } from 'sqs-consumer';
 import { Producer } from 'sqs-producer';
 import { SQSClient, GetQueueAttributesCommand, PurgeQueueCommand, QueueAttributeName } from '@aws-sdk/client-sqs';
 import {
+  GlobalOptions,
   Message,
   QueueName,
   SqsConsumerEventHandlerMeta,
@@ -19,6 +20,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
   public readonly producers = new Map<QueueName, Producer>();
 
   private logger: LoggerService;
+  private globalOptions: GlobalOptions;
   private globalStopOptions: StopOptions;
 
   public constructor(
@@ -27,6 +29,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   public async onModuleInit(): Promise<void> {
+    this.globalOptions = this.options.globalOptions ?? {};
     this.logger = this.options.logger ?? new Logger('SqsService', { timestamp: false });
     this.globalStopOptions = this.options.globalStopOptions ?? {};
 
@@ -52,6 +55,11 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
       const isBatchHandler = metadata.meta.batch === true;
       const consumer = Consumer.create({
         ...consumerOptions,
+        ...(this.globalOptions.endpoint && {
+          sqs: new SQSClient({
+            endpoint: this.globalOptions.endpoint,
+          }),
+        }),
         ...(isBatchHandler
           ? {
               handleMessageBatch: metadata.discoveredMethod.handler.bind(
