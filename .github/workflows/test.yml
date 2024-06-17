@@ -28,14 +28,20 @@ jobs:
           docker cp /tmp/elasticmq.conf elasticmq:/opt/elasticmq.conf
           docker restart elasticmq
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+
       - uses: actions/setup-node@v3
         name: Use Node.js ${{ matrix.node-version }}
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install Dependencies
-        run: npm ci
+        run: pnpm install
+
+      - name: Check lint
+        run: pnpm run lint
 
       - name: Run Tests
-        run: npm run test:e2e
+        run: pnpm run test:e2e
