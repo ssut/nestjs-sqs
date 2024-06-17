@@ -5,31 +5,43 @@ on: push
 jobs:
   test:
     runs-on: ubuntu-22.04
+
     strategy:
       matrix:
-        node-version: [16.x, 18.x, 20.x]
+        node-version:
+          - 16.x
+          - 18.x
+          - 20.x
+
     services:
       elasticmq:
-        image: s12v/elasticmq
-        options: -p 9324:9324 -v /tmp/elasticmq:/etc/elasticmq --name elasticmq
+        image: softwaremill/elasticmq
+        options: -p 9324:9324 --name elasticmq
+
     steps:
-      - uses: actions/checkout@v3
-      - run: sudo cp ${{ github.workspace }}/.github/build/elasticmq.conf /tmp/elasticmq
-      - name: Restart elasticmq
-        uses: docker://docker
-        with:
-          args: docker restart elasticmq
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: ElasticMQ Configuration
+        run: |
+          cp ${{ github.workspace }}/.github/build/elasticmq.conf /tmp/elasticmq.conf
+          docker cp /tmp/elasticmq.conf elasticmq:/opt/elasticmq.conf
+          docker restart elasticmq
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
+
       - uses: actions/setup-node@v3
         name: Use Node.js ${{ matrix.node-version }}
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'pnpm'
-      - run: pnpm install
-      - name: check lint
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      - name: Check lint
         run: pnpm run lint
-      - name: test
-        env:
-          SQS_ENDPOINT: http://localhost:9324
+
+      - name: Run Tests
         run: pnpm run test:e2e
