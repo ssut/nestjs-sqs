@@ -1,12 +1,18 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { Injectable } from '@nestjs/common';
 import { Message, SQSClient } from '@aws-sdk/client-sqs';
+import { Injectable } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
+import { vi } from 'vitest';
+import { beforeAll } from 'vitest';
+import { describe } from 'vitest';
+import { expect } from 'vitest';
+import { afterAll } from 'vitest';
+import { it } from 'vitest';
+import { afterEach } from 'vitest';
 import { SqsModule, SqsService } from '../lib';
-import { SqsConsumerOptions, SqsProducerOptions } from '../lib/sqs.types';
 import { SqsConsumerEventHandler, SqsMessageHandler } from '../lib/sqs.decorators';
-import waitForExpect from 'wait-for-expect';
+import { SqsConsumerOptions, SqsProducerOptions } from '../lib/sqs.types';
 
-const SQS_ENDPOINT = process.env.SQS_ENDPOINT || 'http://localhost:9324';
+const SQS_ENDPOINT = process.env.SQS_ENDPOINT || 'http://localhost:9324/000000000000';
 
 enum TestQueue {
   Test = 'test',
@@ -17,28 +23,24 @@ const sqs = new SQSClient({
   apiVersion: '2012-11-05',
   credentials: { accessKeyId: 'x', secretAccessKey: 'x' },
   endpoint: SQS_ENDPOINT,
-  region: 'none',
+  region: 'us-west-2',
 });
 
 const TestQueues: { [key in TestQueue]: SqsConsumerOptions | SqsProducerOptions } = {
   [TestQueue.Test]: {
     name: TestQueue.Test,
-    queueUrl: `${SQS_ENDPOINT}/queue/test.fifo`,
+    queueUrl: `${SQS_ENDPOINT}/test.fifo`,
     sqs,
   },
   [TestQueue.DLQ]: {
     name: TestQueue.DLQ,
-    queueUrl: `${SQS_ENDPOINT}/queue/test-dead.fifo`,
+    queueUrl: `${SQS_ENDPOINT}/test-dead.fifo`,
     sqs,
   },
 };
 
 describe('SqsModule', () => {
   let module: TestingModule;
-
-  describe.skip('register', () => {
-    //
-  });
 
   describe('registerAsync', () => {
     let module: TestingModule;
@@ -69,16 +71,15 @@ describe('SqsModule', () => {
   });
 
   describe('full flow', () => {
-    const fakeProcessor = jest.fn();
-    const fakeDLQProcessor = jest.fn();
-    const fakeErrorEventHandler = jest.fn();
+    const fakeProcessor = vi.fn();
+    const fakeDLQProcessor = vi.fn();
+    const fakeErrorEventHandler = vi.fn();
 
     @Injectable()
     class A {
       public constructor(public readonly sqsService: SqsService) {}
 
       @SqsMessageHandler(TestQueue.Test)
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       public async handleTestMessage(message: Message) {
         fakeProcessor(message);
       }
@@ -127,8 +128,8 @@ describe('SqsModule', () => {
     });
 
     afterEach(() => {
-      fakeProcessor.mockRestore();
-      fakeErrorEventHandler.mockRestore();
+      fakeProcessor.mockReset();
+      fakeErrorEventHandler.mockReset();
     });
 
     afterAll(async () => {
@@ -146,18 +147,16 @@ describe('SqsModule', () => {
       expect(sqsService.producers.has(TestQueue.Test)).toBe(true);
     });
 
-    it('should call message handler when a new message has come', () => {
-      jest.setTimeout(30000);
-
+    it('should call message handler when a new message has come', async () => {
       const sqsService = module.get(SqsService);
       const id = String(Math.floor(Math.random() * 1000000));
 
-      return new Promise(async (resolve, reject) => {
+      await new Promise<void>(async (resolve, reject) => {
         try {
-          fakeProcessor.mockImplementationOnce((message) => {
+          fakeProcessor.mockImplementation((message) => {
             expect(message).toBeTruthy();
             expect(JSON.parse(message.Body)).toStrictEqual({ test: true });
-            resolve(undefined);
+            resolve();
           });
 
           await sqsService.send(TestQueue.Test, {
@@ -171,26 +170,26 @@ describe('SqsModule', () => {
           reject(e);
         }
       });
-    });
+    }, 5000);
 
     it('should call message handler multiple times when multiple messages have come', async () => {
-      jest.setTimeout(5000);
-
       const sqsService = module.get(SqsService);
       const groupId = String(Math.floor(Math.random() * 1000000));
 
-      for (let i = 0; i < 3; i++) {
-        const id = `${groupId}_${i}`;
-        await sqsService.send(TestQueue.Test, {
-          id,
-          body: { test: true, i },
-          delaySeconds: 0,
-          groupId,
-          deduplicationId: id,
-        });
-      }
+      await Promise.all(
+        Array.from({ length: 3 }).map(async (_, i) => {
+          const id = `${groupId}_${i}`;
+          await sqsService.send(TestQueue.Test, {
+            id,
+            body: { test: true, i },
+            delaySeconds: 0,
+            groupId,
+            deduplicationId: id,
+          });
+        }),
+      );
 
-      await waitForExpect(
+      await vi.waitFor(
         () => {
           expect(fakeProcessor.mock.calls).toHaveLength(3);
           for (const call of fakeProcessor.mock.calls) {
@@ -198,26 +197,26 @@ describe('SqsModule', () => {
             expect(call[0]).toBeTruthy();
           }
         },
-        5000,
-        100,
+        {
+          interval: 100,
+          timeout: 5000,
+        },
       );
-    });
+    }, 5500);
 
-    it('should call the registered error handler when an error occurs', () => {
-      jest.setTimeout(10000);
-
+    it('should call the registered error handler when an error occurs', async () => {
       const sqsService = module.get(SqsService);
       const id = String(Math.floor(Math.random() * 1000000));
-      fakeProcessor.mockImplementationOnce((message) => {
+      fakeProcessor.mockImplementation((_message) => {
         throw new Error('test');
       });
 
-      return new Promise(async (resolve, reject) => {
+      await new Promise<void>(async (resolve, reject) => {
         try {
-          fakeErrorEventHandler.mockImplementationOnce((error, message) => {
+          fakeErrorEventHandler.mockImplementationOnce((error, _message) => {
             expect(error).toBeInstanceOf(Error);
             expect(error.message).toContain('test');
-            resolve(undefined);
+            resolve();
           });
 
           await sqsService.send(TestQueue.Test, {
@@ -231,18 +230,18 @@ describe('SqsModule', () => {
           reject(e);
         }
       });
-    });
+    }, 5000);
 
     it('should consume a dead letter from DLQ', async () => {
-      jest.setTimeout(10000);
-
-      await waitForExpect(
+      await vi.waitFor(
         () => {
           expect(fakeDLQProcessor.mock.calls.length).toBe(1);
         },
-        9900,
-        500,
+        {
+          interval: 500,
+          timeout: 9900,
+        },
       );
-    });
+    }, 10000);
   });
 });
