@@ -1,7 +1,7 @@
+import type { MessageAttributeValue } from '@aws-sdk/client-sqs';
+import type { LoggerService, ModuleMetadata, Type } from '@nestjs/common';
 import type { Consumer, ConsumerOptions, StopOptions } from 'sqs-consumer';
 import type { Producer } from 'sqs-producer';
-import type { LoggerService, ModuleMetadata, Type } from '@nestjs/common';
-import type { MessageAttributeValue } from '@aws-sdk/client-sqs';
 
 export type ProducerOptions = Parameters<typeof Producer.create>[0];
 export type QueueName = string;

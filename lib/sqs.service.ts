@@ -1,7 +1,9 @@
+import { GetQueueAttributesCommand, PurgeQueueCommand, QueueAttributeName, SQSClient } from '@aws-sdk/client-sqs';
+import { DiscoveryService } from '@golevelup/nestjs-discovery';
 import { Inject, Injectable, Logger, LoggerService, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Consumer, StopOptions } from 'sqs-consumer';
 import { Producer } from 'sqs-producer';
-import { SQSClient, GetQueueAttributesCommand, PurgeQueueCommand, QueueAttributeName } from '@aws-sdk/client-sqs';
+import { SQS_CONSUMER_EVENT_HANDLER, SQS_CONSUMER_METHOD, SQS_OPTIONS } from './sqs.constants';
 import {
   Message,
   QueueName,
@@ -10,8 +12,6 @@ import {
   SqsMessageHandlerMeta,
   SqsOptions,
 } from './sqs.types';
-import { DiscoveryService } from '@golevelup/nestjs-discovery';
-import { SQS_CONSUMER_EVENT_HANDLER, SQS_CONSUMER_METHOD, SQS_OPTIONS } from './sqs.constants';
 
 @Injectable()
 export class SqsService implements OnModuleInit, OnModuleDestroy {
@@ -30,12 +30,10 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
     this.logger = this.options.logger ?? new Logger('SqsService', { timestamp: false });
     this.globalStopOptions = this.options.globalStopOptions ?? {};
 
-    const messageHandlers = await this.discover.providerMethodsWithMetaAtKey<SqsMessageHandlerMeta>(
-      SQS_CONSUMER_METHOD,
-    );
-    const eventHandlers = await this.discover.providerMethodsWithMetaAtKey<SqsConsumerEventHandlerMeta>(
-      SQS_CONSUMER_EVENT_HANDLER,
-    );
+    const messageHandlers =
+      await this.discover.providerMethodsWithMetaAtKey<SqsMessageHandlerMeta>(SQS_CONSUMER_METHOD);
+    const eventHandlers =
+      await this.discover.providerMethodsWithMetaAtKey<SqsConsumerEventHandlerMeta>(SQS_CONSUMER_EVENT_HANDLER);
 
     this.options.consumers?.forEach((options) => {
       const { name, stopOptions, ...consumerOptions } = options;
