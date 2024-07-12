@@ -40,8 +40,11 @@ jobs:
           TAG_NAME: ${{ github.event.release.tag_name }}
         run: pnpm version ${TAG_NAME} --no-git-tag-version
 
-      - name: 🐙 Publish
+      - name: Set publishing config
+        run: pnpm config set '//registry.npmjs.org/:_authToken' "${NODE_AUTH_TOKEN}"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+
+      - name: 🐙 Publish
         run: |
-          pnpm publish --no-git-checks
+          pnpm publish --no-git-checks --access=public
