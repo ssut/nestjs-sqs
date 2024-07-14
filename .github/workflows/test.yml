@@ -4,14 +4,14 @@ on: push
 
 jobs:
   test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     strategy:
       matrix:
         node-version:
-          - 16.x
           - 18.x
           - 20.x
+          - 22.x
 
     services:
       elasticmq:
@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: ElasticMQ Configuration
         run: |
@@ -29,9 +29,9 @@ jobs:
           docker restart elasticmq
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         name: Use Node.js ${{ matrix.node-version }}
         with:
           node-version: ${{ matrix.node-version }}
@@ -41,7 +41,7 @@ jobs:
         run: pnpm install
 
       - name: Check lint
-        run: pnpm run lint
+        run: pnpm biome ci
 
       - name: Run Tests
         run: pnpm run test:e2e

@@ -1,8 +1,0 @@
-{
-  "extends": "./tsconfig",
-  "include": [
-    "lib",
-    "e2e"
-  ],
-  "exclude": ["node_modules"]
-}
