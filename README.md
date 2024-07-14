@@ -13,7 +13,7 @@ This library internally uses [bbc/sqs-producer](https://github.com/bbc/sqs-produ
 ## Installation
 
 ```shell script
-$ npm i --save @ssut/nestjs-sqs
+npm i --save @ssut/nestjs-sqs @aws-sdk/client-sqs
 ```
 
 ## Quick Start
