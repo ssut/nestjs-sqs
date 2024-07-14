@@ -5,8 +5,50 @@ on:
     types: [created]
 
 jobs:
+  test:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        node-version:
+          - 18.x
+          - 20.x
+          - 22.x
+    services:
+      elasticmq:
+        image: softwaremill/elasticmq
+        options: -p 9324:9324 --name elasticmq
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: ElasticMQ Configuration
+        run: |
+          cp ${{ github.workspace }}/.github/build/elasticmq.conf /tmp/elasticmq.conf
+          docker cp /tmp/elasticmq.conf elasticmq:/opt/elasticmq.conf
+          docker restart elasticmq
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        name: Use Node.js ${{ matrix.node-version }}
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      - name: Check lint
+        run: pnpm biome ci
+
+      - name: Run Tests
+        run: pnpm run test:e2e
+
+
   publish-npm:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    needs: test
     permissions:
       contents: read
       id-token: write
