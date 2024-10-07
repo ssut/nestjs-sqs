@@ -20,7 +20,12 @@ export type SqsProducerOptions = ProducerOptions & {
   name: QueueName;
 };
 
+export type GlobalOptions = {
+  endpoint?: string;
+};
+
 export interface SqsOptions {
+  globalOptions?: GlobalOptions;
   consumers?: SqsConsumerOptions[];
   producers?: SqsProducerOptions[];
   logger?: LoggerService;
