@@ -26,8 +26,24 @@ Just register this module:
 @Module({
   imports: [
     SqsModule.register({
-      consumers: [],
-      producers: [],
+      consumers: [
+        {
+          // Name is a unique identifier for this consumer instance
+          name: "myConsumer1",
+          // The actual SQS queue URL
+          queueUrl: "https://sqs.region.amazonaws.com/account/queue-name",
+          region: "us-east-1",
+        },
+      ],
+      producers: [
+        {
+          // Name is a unique identifier for this producer instance
+          name: "myProducer1",
+          // The actual SQS queue URL
+          queueUrl: "https://sqs.region.amazonaws.com/account/queue-name",
+          region: "us-east-1",
+        },
+      ],
     }),
   ],
 })
@@ -43,8 +59,8 @@ In such case, use `registerAsync()` method like many other Nest.js libraries.
 SqsModule.registerAsync({
   useFactory: () => {
     return {
-      consumers: [],
-      producers: [],
+      consumers: [...],
+      producers: [...],
     };
   },
 });
@@ -72,14 +88,17 @@ SqsModule.registerAsync({
 You need to decorate methods in your NestJS providers in order to have them be automatically attached as event handlers for incoming SQS messages:
 
 ```ts
-import { Message } from '@aws-sdk/client-sqs';
+import { Message } from "@aws-sdk/client-sqs";
 
 @Injectable()
 export class AppMessageHandler {
-  @SqsMessageHandler(/** name: */ 'queueName', /** batch: */ false)
+  @SqsMessageHandler(/** name: */ "myConsumer1", /** batch: */ false)
   public async handleMessage(message: Message) {}
 
-  @SqsConsumerEventHandler(/** name: */ 'queueName', /** eventName: */ 'processing_error')
+  @SqsConsumerEventHandler(
+    /** name: */ "myConsumer1",
+    /** eventName: */ "processing_error",
+  )
   public onProcessingError(error: Error, message: Message) {
     // report errors here
   }
@@ -95,7 +114,7 @@ export class AppService {
   ) { }
 
   public async dispatchSomething() {
-    await this.sqsService.send(/** name: */ 'queueName', {
+    await this.sqsService.send(/** name: */ 'myProducer1', {
       id: 'id',
       body: { ... },
       groupId: 'groupId',
