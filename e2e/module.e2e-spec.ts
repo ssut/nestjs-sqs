@@ -68,6 +68,29 @@ describe('SqsModule', () => {
       expect(sqsService.options.consumers).toHaveLength(1);
       expect(sqsService.options.producers).toHaveLength(1);
     });
+
+    it('should register module async with globalOptions', async () => {
+      module = await Test.createTestingModule({
+        imports: [
+          SqsModule.registerAsync({
+            useFactory: async () => {
+              return {
+                globalOptions: {
+                  endpoint: SQS_ENDPOINT,
+                },
+                consumers: [TestQueues[TestQueue.Test]],
+                producers: [TestQueues[TestQueue.Test]],
+              };
+            },
+          }),
+        ],
+      }).compile();
+
+      const sqsService = module.get(SqsService);
+      expect(sqsService).toBeTruthy();
+      expect(sqsService.options.consumers).toHaveLength(1);
+      expect(sqsService.options.producers).toHaveLength(1);
+    });
   });
 
   describe('full flow', () => {
