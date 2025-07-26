@@ -1,4 +1,13 @@
-import { GetQueueAttributesCommand, PurgeQueueCommand, QueueAttributeName, SQSClient } from '@aws-sdk/client-sqs';
+import {
+  ChangeMessageVisibilityCommand,
+  DeleteMessageBatchCommand,
+  DeleteMessageCommand,
+  GetQueueAttributesCommand,
+  PurgeQueueCommand,
+  QueueAttributeName,
+  SQSClient,
+  Message as SqsMessage,
+} from '@aws-sdk/client-sqs';
 import { DiscoveryService } from '@golevelup/nestjs-discovery';
 import { Inject, Injectable, Logger, LoggerService, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Consumer, StopOptions } from 'sqs-consumer';
@@ -157,5 +166,61 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
 
     const producer = this.producers.get(name);
     return producer.send(messages as any[]);
+  }
+
+  public async deleteMessage(name: QueueName, receiptHandle: string) {
+    if (!this.consumers.has(name)) {
+      throw new Error(`Consumer does not exist: ${name}`);
+    }
+
+    const { sqs, queueUrl } = this.getQueueInfo(name);
+
+    const command = new DeleteMessageCommand({
+      QueueUrl: queueUrl,
+      ReceiptHandle: receiptHandle,
+    });
+
+    return await sqs.send(command);
+  }
+
+  public async deleteMessageBatch(
+    name: QueueName,
+    messages: SqsMessage[] | Pick<SqsMessage, 'MessageId' | 'ReceiptHandle'>[],
+  ) {
+    if (!this.consumers.has(name)) {
+      throw new Error(`Consumer does not exist: ${name}`);
+    }
+
+    const { sqs, queueUrl } = this.getQueueInfo(name);
+
+
+    const commands = new DeleteMessageBatchCommand({
+      QueueUrl: queueUrl,
+      Entries: messages.map((message) => {
+        return {
+          Id: message.MessageId,
+          ReceiptHandle: message.ReceiptHandle,
+        };
+      }),
+    });
+
+    return await sqs.send(commands);
+  }
+
+  public async changeMessageVisibility(name: QueueName, receiptHandle: string, visibilityTimeout: number) {
+    if (!this.consumers.has(name)) {
+      throw new Error(`Consumer does not exist: ${name}`);
+    }
+
+    const { sqs, queueUrl } = this.getQueueInfo(name);
+
+
+    const command = new ChangeMessageVisibilityCommand({
+      QueueUrl: queueUrl,
+      ReceiptHandle: receiptHandle,
+      VisibilityTimeout: visibilityTimeout,
+    });
+
+    return await sqs.send(command);
   }
 }
