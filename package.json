@@ -23,8 +23,8 @@
   "license": "MIT",
   "dependencies": {
     "@golevelup/nestjs-discovery": "^4.0.3",
-    "sqs-consumer": "^11.0.1",
-    "sqs-producer": "^5.0.0"
+    "sqs-consumer": ">=12.0.0",
+    "sqs-producer": ">=7.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
