@@ -1,6 +1,6 @@
 import { GetQueueAttributesCommand, PurgeQueueCommand, QueueAttributeName, SQSClient } from '@aws-sdk/client-sqs';
 import { DiscoveryService } from '@golevelup/nestjs-discovery';
-import { Inject, Injectable, Logger, LoggerService, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { BeforeApplicationShutdown, Inject, Injectable, Logger, LoggerService, OnModuleInit } from '@nestjs/common';
 import { Consumer, StopOptions } from 'sqs-consumer';
 import { Producer } from 'sqs-producer';
 import { SQS_CONSUMER_EVENT_HANDLER, SQS_CONSUMER_METHOD, SQS_OPTIONS } from './sqs.constants';
@@ -14,7 +14,7 @@ import {
 } from './sqs.types';
 
 @Injectable()
-export class SqsService implements OnModuleInit, OnModuleDestroy {
+export class SqsService implements OnModuleInit, BeforeApplicationShutdown {
   public readonly consumers = new Map<QueueName, SqsConsumerMapValues>();
   public readonly producers = new Map<QueueName, Producer>();
 
@@ -86,7 +86,7 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  public onModuleDestroy() {
+  public beforeApplicationShutdown() {
     for (const consumer of this.consumers.values()) {
       consumer.instance.stop(consumer.stopOptions);
     }
