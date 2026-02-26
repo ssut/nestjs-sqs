@@ -12,7 +12,7 @@ import { SqsModule, SqsService } from '../lib';
 import { SqsConsumerEventHandler, SqsMessageHandler } from '../lib/sqs.decorators';
 import { SqsConsumerOptions, SqsProducerOptions } from '../lib/sqs.types';
 
-const SQS_ENDPOINT = process.env.SQS_ENDPOINT || 'http://localhost:4566/000000000000';
+const SQS_ENDPOINT = process.env.SQS_ENDPOINT || 'http://localhost:9324/000000000000';
 
 enum TestQueue {
   Test = 'test',
@@ -23,7 +23,7 @@ const sqs = new SQSClient({
   apiVersion: '2012-11-05',
   credentials: { accessKeyId: 'x', secretAccessKey: 'x' },
   endpoint: SQS_ENDPOINT,
-  region: 'us-east-1',
+  region: 'us-west-2',
 });
 
 const TestQueues: { [key in TestQueue]: SqsConsumerOptions | SqsProducerOptions } = {
