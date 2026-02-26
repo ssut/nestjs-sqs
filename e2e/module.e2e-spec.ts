@@ -12,7 +12,7 @@ import { SqsModule, SqsService } from '../lib';
 import { SqsConsumerEventHandler, SqsMessageHandler } from '../lib/sqs.decorators';
 import { SqsConsumerOptions, SqsProducerOptions } from '../lib/sqs.types';
 
-const SQS_ENDPOINT = process.env.SQS_ENDPOINT || 'http://localhost:9324/000000000000';
+const SQS_ENDPOINT = process.env.SQS_ENDPOINT || 'http://localhost:4566/000000000000';
 
 enum TestQueue {
   Test = 'test',
@@ -23,7 +23,7 @@ const sqs = new SQSClient({
   apiVersion: '2012-11-05',
   credentials: { accessKeyId: 'x', secretAccessKey: 'x' },
   endpoint: SQS_ENDPOINT,
-  region: 'us-west-2',
+  region: 'us-east-1',
 });
 
 const TestQueues: { [key in TestQueue]: SqsConsumerOptions | SqsProducerOptions } = {
@@ -243,5 +243,59 @@ describe('SqsModule', () => {
         },
       );
     }, 10000);
+  });
+
+  describe('graceful shutdown', () => {
+    @Injectable()
+    class B {
+      @SqsMessageHandler(TestQueue.Test)
+      public async handleTestMessage(message: Message) {
+        // no-op
+      }
+
+      @SqsMessageHandler(TestQueue.DLQ)
+      public async handleDLQMessage(message: Message) {
+        // no-op
+      }
+    }
+
+    it('should wait for all consumers to stop before onModuleDestroy resolves', async () => {
+      const module = await Test.createTestingModule({
+        imports: [
+          SqsModule.register({
+            consumers: [
+              {
+                ...TestQueues[TestQueue.Test],
+                waitTimeSeconds: 1,
+                pollingCompleteWaitTimeMs: 10_000,
+              },
+              {
+                ...TestQueues[TestQueue.DLQ],
+                waitTimeSeconds: 1,
+                pollingCompleteWaitTimeMs: 10_000,
+              },
+            ],
+          }),
+        ],
+        providers: [B],
+      }).compile();
+      await module.init();
+
+      const sqsService = module.get(SqsService);
+      const stoppedEvents: string[] = [];
+
+      for (const [name, consumer] of sqsService.consumers.entries()) {
+        consumer.instance.on('stopped', () => {
+          stoppedEvents.push(name);
+        });
+      }
+
+      await sqsService.onModuleDestroy();
+
+      expect(stoppedEvents).toHaveLength(sqsService.consumers.size);
+      for (const [, consumer] of sqsService.consumers.entries()) {
+        expect(consumer.instance.status.isRunning).toBe(false);
+      }
+    });
   });
 });
