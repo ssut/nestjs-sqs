@@ -86,10 +86,20 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  public onModuleDestroy() {
+  public async onModuleDestroy(): Promise<void> {
+    const stopPromises: Promise<void>[] = [];
     for (const consumer of this.consumers.values()) {
-      consumer.instance.stop(consumer.stopOptions);
+      if (!consumer.instance.status.isRunning) {
+        continue;
+      }
+      stopPromises.push(
+        new Promise<void>((resolve) => {
+          consumer.instance.once('stopped', () => resolve());
+          consumer.instance.stop(consumer.stopOptions);
+        }),
+      );
     }
+    await Promise.all(stopPromises);
   }
 
   private getQueueInfo(name: QueueName) {

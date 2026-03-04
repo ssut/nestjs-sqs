@@ -1,6 +1,7 @@
 import { Message, SQSClient } from '@aws-sdk/client-sqs';
 import { Injectable } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Consumer } from 'sqs-consumer';
 import { vi } from 'vitest';
 import { beforeAll } from 'vitest';
 import { describe } from 'vitest';
@@ -10,7 +11,7 @@ import { it } from 'vitest';
 import { afterEach } from 'vitest';
 import { SqsModule, SqsService } from '../lib';
 import { SqsConsumerEventHandler, SqsMessageHandler } from '../lib/sqs.decorators';
-import { SqsConsumerOptions, SqsProducerOptions } from '../lib/sqs.types';
+import { SqsConsumerOptions, SqsConsumerMapValues, SqsProducerOptions } from '../lib/sqs.types';
 
 const SQS_ENDPOINT = process.env.SQS_ENDPOINT || 'http://localhost:9324/000000000000';
 
@@ -243,5 +244,80 @@ describe('SqsModule', () => {
         },
       );
     }, 10000);
+  });
+
+  describe('graceful shutdown', () => {
+    it('should await all consumers to emit stopped before onModuleDestroy resolves', async () => {
+      const sqsService = new SqsService(
+        { consumers: [], producers: [] },
+        {} as any,
+      );
+
+      const consumer1 = Consumer.create({ queueUrl: 'http://fake/q1', sqs, handleMessage: async () => {} });
+      const consumer2 = Consumer.create({ queueUrl: 'http://fake/q2', sqs, handleMessage: async () => {} });
+
+      consumer1.on('error', () => {});
+      consumer2.on('error', () => {});
+
+      consumer1.start();
+      consumer2.start();
+
+      sqsService.consumers.set('q1', { instance: consumer1, stopOptions: {} });
+      sqsService.consumers.set('q2', { instance: consumer2, stopOptions: {} });
+
+      expect(consumer1.status.isRunning).toBe(true);
+      expect(consumer2.status.isRunning).toBe(true);
+
+      await sqsService.onModuleDestroy();
+
+      expect(consumer1.status.isRunning).toBe(false);
+      expect(consumer2.status.isRunning).toBe(false);
+    });
+
+    it('should not hang when a consumer is already stopped', async () => {
+      const sqsService = new SqsService(
+        { consumers: [], producers: [] },
+        {} as any,
+      );
+
+      const consumer = Consumer.create({ queueUrl: 'http://fake/q1', sqs, handleMessage: async () => {} });
+      // Consumer is created in stopped state (never started), status.isRunning === false
+      expect(consumer.status.isRunning).toBe(false);
+
+      sqsService.consumers.set('q1', { instance: consumer, stopOptions: {} });
+
+      // This must resolve immediately, not hang forever
+      await sqsService.onModuleDestroy();
+    });
+
+    it('should pass stopOptions to consumer.stop()', async () => {
+      const sqsService = new SqsService(
+        { consumers: [], producers: [] },
+        {} as any,
+      );
+
+      const consumer = Consumer.create({ queueUrl: 'http://fake/q1', sqs, handleMessage: async () => {} });
+      consumer.on('error', () => {});
+      consumer.start();
+
+      const stopSpy = vi.spyOn(consumer, 'stop');
+      const stopOptions = { abort: true };
+      sqsService.consumers.set('q1', { instance: consumer, stopOptions });
+
+      await sqsService.onModuleDestroy();
+
+      expect(stopSpy).toHaveBeenCalledWith(stopOptions);
+      stopSpy.mockRestore();
+    });
+
+    it('should resolve immediately when there are no consumers', async () => {
+      const sqsService = new SqsService(
+        { consumers: [], producers: [] },
+        {} as any,
+      );
+
+      // No consumers registered at all
+      await sqsService.onModuleDestroy();
+    });
   });
 });
