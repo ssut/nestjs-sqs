@@ -47,24 +47,23 @@ export class SqsService implements OnModuleInit, OnModuleDestroy {
         return;
       }
 
+      const { instance } = metadata.discoveredMethod.parentClass;
+      const { methodName } = metadata.discoveredMethod;
       const isBatchHandler = metadata.meta.batch === true;
       const consumer = Consumer.create({
         ...consumerOptions,
         ...(isBatchHandler
-          ? {
-              handleMessageBatch: metadata.discoveredMethod.handler.bind(
-                metadata.discoveredMethod.parentClass.instance,
-              ),
-            }
-          : { handleMessage: metadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance) }),
+          ? { handleMessageBatch: (...args: unknown[]) => instance[methodName](...args) }
+          : { handleMessage: (...args: unknown[]) => instance[methodName](...args) }),
       });
 
       const eventsMetadata = eventHandlers.filter(({ meta }) => meta.name === name);
       for (const eventMetadata of eventsMetadata) {
         if (eventMetadata) {
-          consumer.addListener(
-            eventMetadata.meta.eventName,
-            eventMetadata.discoveredMethod.handler.bind(metadata.discoveredMethod.parentClass.instance),
+          const eventInstance = eventMetadata.discoveredMethod.parentClass.instance;
+          const eventMethodName = eventMetadata.discoveredMethod.methodName;
+          consumer.addListener(eventMetadata.meta.eventName, (...args: unknown[]) =>
+            eventInstance[eventMethodName](...args),
           );
         }
       }
