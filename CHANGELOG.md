@@ -10,6 +10,9 @@ Phase 2 (part 2): bump the dev tooling to current majors.
   negations, `assist.actions.source.organizeImports`, `linter.rules.preset`).
 - **Vitest 2 → 4** (with `@vitest/coverage-v8`), pulling **Vite 7** and
   **`@types/node` 22**. The deprecated CJS Node API warning is gone.
+- **Minimum Node bumped to 22** (`engines` `>=22.0.0`; CI matrix `22.x`/`24.x`).
+  Vite 7 requires Node 20.19+/22.12+ and sqs-consumer 15 targets active LTS
+  only, so Node 18/20 are dropped (Node 18 is EOL).
 - Added `"node"` to `tsconfig` `types` so Node globals/`node:` modules resolve
   under the restricted `types` list.
 
